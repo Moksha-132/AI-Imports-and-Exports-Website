@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-bg: #f8fafc;
+  --color-brand-surface: #ffffff;
+  --color-brand-primary: #f59e0b;
+  --color-brand-secondary: #d97706;
+  --color-brand-accent: #fbbf24;
+  --color-brand-text: #0f172a;
+  --color-brand-muted: #64748b;
+  --color-brand-border: #e2e8f0;
+  
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-brand-bg);
+    color: var(--color-brand-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  
+  ::selection {
+    background-color: #fef3c7;
+    color: var(--color-brand-secondary);
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white border border-slate-200/60 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .premium-gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-600;
+  }
+
+  .premium-button {
+    @apply relative px-6 py-3 rounded-2xl font-bold transition-all duration-300
+           bg-slate-900 text-white
+           hover:bg-black hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100;
+  }
+
+  .nav-link-active {
+    @apply text-amber-600 bg-amber-50 shadow-sm border border-amber-100 font-bold;
+  }
+
+  .stat-card {
+    @apply bg-white border border-slate-200/60 rounded-3xl shadow-sm p-8 space-y-4;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+}
