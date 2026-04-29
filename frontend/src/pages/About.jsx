@@ -7,7 +7,6 @@ const About = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <Navbar />
-      
       <section className="max-w-7xl mx-auto px-8 py-24">
         <div className="max-w-3xl space-y-8">
           <h1 className="text-6xl font-extrabold text-slate-900 leading-tight">
@@ -17,7 +16,6 @@ const About = () => {
             Shnoor International was founded on a simple principle: global trade should be accessible, transparent, and automated. We combine deep domain expertise in logistics with cutting-edge AI to solve the industry's most complex challenges.
           </p>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 py-24 border-b border-slate-200">
           <div className="space-y-6">
             <h2 className="text-3xl font-bold">Our Mission</h2>
@@ -32,7 +30,6 @@ const About = () => {
             </p>
           </div>
         </div>
-
         <div className="py-24 space-y-16 text-center">
           <h2 className="text-4xl font-bold">The Core Values that Drive Us</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 text-left">
@@ -58,5 +55,4 @@ const About = () => {
     </div>
   );
 };
-
 export default About;

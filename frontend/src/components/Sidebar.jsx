@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Search, Calculator, ShieldCheck, Truck, BarChart3, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, Calculator, ShieldCheck, Truck, BarChart3, LogOut, DollarSign } from 'lucide-react';
 
 const Sidebar = ({ onLogout }) => {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ const Sidebar = ({ onLogout }) => {
     { id: 'risk', icon: ShieldCheck, label: 'Risk Analysis', path: '/dashboard/risk' },
     { id: 'shipment', icon: Truck, label: 'Tracking', path: '/dashboard/shipment' },
     { id: 'analytics', icon: BarChart3, label: 'Analytics', path: '/dashboard/analytics' },
+    { id: 'ledger', icon: DollarSign, label: 'Ledger', path: '/dashboard/ledger' },
   ];
 
   return (
@@ -46,10 +47,6 @@ const Sidebar = ({ onLogout }) => {
       </nav>
 
       <div className="pt-6 border-t border-slate-100 space-y-3">
-        <button className="nav-link w-full group">
-          <Settings size={20} className="text-slate-400 group-hover:text-slate-900 transition-colors" />
-          <span className="font-bold">Settings</span>
-        </button>
         <button 
           onClick={onLogout}
           className="nav-link w-full text-rose-500 hover:text-rose-600 hover:bg-rose-50"

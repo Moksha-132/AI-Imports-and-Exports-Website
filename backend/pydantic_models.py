@@ -1,23 +1,16 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, Dict, Any, List
 from datetime import datetime
 
-# Document Schemas
-class DocumentBase(BaseModel):
+class DocumentOut(BaseModel):
+    id: int
     filename: str
     file_type: str
-
-class DocumentOut(DocumentBase):
-    id: int
     extracted_data: Optional[Dict[str, Any]]
+    humanized_summary: Optional[str] = None
     status: str
     created_at: datetime
-    class Config:
-        from_attributes = True
-
-# HSN Schemas
-class HSNQuery(BaseModel):
-    description: str
+    model_config = ConfigDict(from_attributes=True)
 
 class HSNOut(BaseModel):
     id: int
@@ -25,26 +18,18 @@ class HSNOut(BaseModel):
     hsn_code: str
     confidence: float
     ai_logic: str
-    class Config:
-        from_attributes = True
-
-# Duty Schemas
-class DutyReq(BaseModel):
-    hsn_code: str
-    origin: str
-    destination: str
-    value: float
+    explanation: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 class DutyOut(BaseModel):
     id: int
     country: str
     hsn_code: str
+    basic_duty: float
+    additional_tax: float
     total_tax: float
-    currency: str
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-# Risk Schemas
 class RiskOut(BaseModel):
     id: int
     entity_name: str
@@ -52,20 +37,21 @@ class RiskOut(BaseModel):
     message: str
     trust_score: float
     created_at: datetime
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-# Shipment Schemas
-class ShipmentCreate(BaseModel):
+class ShipmentOut(BaseModel):
+    id: int
     shipment_id: str
-    type: str
+    type: Optional[str]
     origin: str
     destination: str
     status: str
     progress: int = 0
     eta: Optional[datetime] = None
+    model_config = ConfigDict(from_attributes=True)
 
-class ShipmentOut(ShipmentCreate):
-    id: int
-    class Config:
-        from_attributes = True
+class AnalyticsOut(BaseModel):
+    total_trade_volume: str
+    duty_saved: str
+    docs_processed: str
+    top_hsn_categories: List[Dict[str, Any]]

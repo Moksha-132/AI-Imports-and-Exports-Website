@@ -153,19 +153,6 @@ const Login = () => {
                   )}
                 </button>
 
-                <div className="relative py-4">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200"></div></div>
-                  <div className="relative flex justify-center text-xs font-bold uppercase tracking-widest"><span className="bg-white px-4 text-slate-400">or</span></div>
-                </div>
-
-                <button 
-                  type="button"
-                  className="w-full bg-white border border-slate-200 text-slate-700 font-bold py-5 rounded-2xl flex items-center justify-center gap-3 hover:bg-slate-50 transition-all"
-                >
-                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="h-5 w-5" alt="Google" />
-                  Continue with Google
-                </button>
-
                 <div className="pt-6 text-center">
                   <p className="text-sm text-slate-500 font-medium">
                     Don't have an account?{' '}

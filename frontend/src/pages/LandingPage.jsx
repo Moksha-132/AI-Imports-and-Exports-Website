@@ -1,9 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowRight, BarChart, CheckCircle2, FileText, Cpu, Shield, Globe, Zap, Truck, Search, Mail, Phone, Upload, ShieldCheck, Ship } from 'lucide-react';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 
-const LandingPage = ({ onGetStarted, onNavigate }) => {
+const LandingPage = ({ onNavigate }) => {
+  const navigate = useNavigate();
   return (
     <div id="top" className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-amber-200">
       <Navbar onNavigate={onNavigate} currentView="landing" />
@@ -25,7 +27,7 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
 
           <div className="flex items-center gap-6 pt-4">
             <button 
-              onClick={onGetStarted}
+              onClick={() => navigate('/register')}
               className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-10 py-5 rounded-full flex items-center gap-3 shadow-xl shadow-amber-400/20 transition-all active:scale-95 text-lg group"
             >
               Get Started <ArrowRight className="group-hover:translate-x-1 transition-transform" />
@@ -207,6 +209,24 @@ const LandingPage = ({ onGetStarted, onNavigate }) => {
               We envision a world where borders are no longer barriers to commerce. Through continuous innovation, Shnoor is building the digital infrastructure for a truly global economy.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* CTA Section - Restoring from Premium Design */}
+      <section className="py-40 px-8">
+        <div className="max-w-5xl mx-auto bg-amber-400 rounded-[4rem] p-24 text-center space-y-12 shadow-2xl shadow-amber-400/30">
+          <h2 className="text-6xl font-black text-slate-900 tracking-tight leading-tight">
+            Ready to automate your <br /> global supply chain?
+          </h2>
+          <p className="text-xl text-slate-900/70 font-medium max-w-2xl mx-auto leading-relaxed">
+            Join hundreds of global enterprises using Shnoor to streamline their international trade operations.
+          </p>
+          <button 
+            onClick={() => navigate('/register')}
+            className="bg-slate-900 text-white px-12 py-6 rounded-[2rem] text-xl font-black shadow-2xl hover:scale-105 transition-all active:scale-95"
+          >
+            Start Your Journey
+          </button>
         </div>
       </section>
 

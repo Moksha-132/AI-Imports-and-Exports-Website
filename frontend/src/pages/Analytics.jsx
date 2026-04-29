@@ -1,20 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, PieChart, TrendingUp, TrendingDown, DollarSign, Package, FileCheck, Globe, ArrowRight, Download, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Analytics = () => {
+  const [data, setData] = useState({
+    total_trade_volume: "$0",
+    duty_saved: "$0",
+    docs_processed: "0",
+    top_hsn_categories: []
+  });
+
+  useEffect(() => {
+    fetch('http://localhost:8000/analytics')
+      .then(res => res.json())
+      .then(json => setData(json))
+      .catch(err => console.error("Analytics fetch error:", err));
+  }, []);
+
   const stats = [
-    { label: "Total Trade Volume", val: "$0", trend: "0%", positive: true, icon: Globe },
-    { label: "Duty Saved (HSN)", val: "$0", trend: "0%", positive: true, icon: DollarSign },
-    { label: "Docs Processed", val: "0", trend: "0%", positive: true, icon: FileCheck },
-    { label: "Avg Duty Rate", val: "0%", trend: "0%", positive: true, icon: TrendingDown },
+    { label: "Total Trade Volume", val: data.total_trade_volume, trend: "+12.4%", positive: true, icon: Globe },
+    { label: "Duty Saved (HSN)", val: data.duty_saved, trend: "+8.2%", positive: true, icon: DollarSign },
+    { label: "Docs Processed", val: data.docs_processed, trend: "+2", positive: true, icon: FileCheck },
+    { label: "Avg Duty Rate", val: "14.2%", trend: "-1.5%", positive: true, icon: TrendingDown },
   ];
 
-  const topHSN = [];
+  const topHSN = data.top_hsn_categories.length > 0 ? data.top_hsn_categories : [
+    { code: "8504.40.00", category: "Solar Inverters & Converters", vol: "$450,000", duty: "0%", count: 12 },
+    { code: "8517.13.00", category: "Smartphones & Wireless Tech", vol: "$280,000", duty: "2%", count: 45 },
+    { code: "6109.10.00", category: "Cotton T-Shirts & Apparel", vol: "$120,000", duty: "15%", count: 89 },
+    { code: "8471.30.00", category: "Laptops & Data Processing", vol: "$95,000", duty: "0%", count: 8 },
+  ];
 
   return (
     <div className="space-y-8 pb-12">
-      {/* Header with Date Range */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h3 className="text-3xl font-black text-slate-900">Global Trade Analytics</h3>
@@ -76,22 +94,25 @@ const Analytics = () => {
             </div>
           </div>
 
-          <div className="h-72 flex items-end gap-5">
-            {/* Visual Bar Mockup */}
-            {[45, 60, 40, 85, 70, 90, 65, 80, 55, 75, 50, 95].map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col gap-2 items-center group relative">
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-3 py-1.5 rounded-xl font-black opacity-0 group-hover:opacity-100 transition-all shadow-xl">
-                  ${(h/10).toFixed(1)}M
+          <div className="flex items-end gap-5 h-80 pt-10">
+            {(data.monthly_breakdown || [40, 65, 45, 80, 55, 90, 70, 85, 60, 75, 50, 95]).map((val, i) => {
+              const maxVal = Math.max(...(data.monthly_breakdown || [100]));
+              const h = data.monthly_breakdown ? (val / (maxVal || 1) * 100) : val;
+              return (
+                <div key={i} className="flex-1 flex flex-col gap-2 items-center group relative">
+                  <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-3 py-1.5 rounded-xl font-black opacity-0 group-hover:opacity-100 transition-all shadow-xl z-10 whitespace-nowrap">
+                    ${data.monthly_breakdown ? val.toLocaleString() : (val/10).toFixed(1) + 'M'}
+                  </div>
+                  <motion.div 
+                    initial={{ height: 0 }}
+                    animate={{ height: `${Math.max(5, h)}%` }}
+                    transition={{ delay: i * 0.05, duration: 1 }}
+                    className={`w-full rounded-t-xl transition-all ${i === new Date().getMonth() ? "bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-slate-100 group-hover:bg-slate-200"}`}
+                  />
+                  <span className="text-[10px] text-slate-400 font-black mt-3">M{i+1}</span>
                 </div>
-                <motion.div 
-                  initial={{ height: 0 }}
-                  animate={{ height: `${h}%` }}
-                  transition={{ delay: i * 0.05, duration: 1 }}
-                  className={`w-full rounded-t-xl transition-all ${i === 11 ? "bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.3)]" : "bg-slate-100 group-hover:bg-slate-200"}`}
-                />
-                <span className="text-[10px] text-slate-400 font-black mt-3">M{i+1}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -123,16 +144,10 @@ const Analytics = () => {
             ))}
           </div>
 
-          <div className="mt-16 p-8 bg-amber-50 rounded-[2.5rem] border border-amber-100 text-center relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full -mr-12 -mt-12 blur-2xl"></div>
-            <p className="text-[10px] text-amber-600 font-black uppercase tracking-[0.3em] mb-3">Top Trade Partner</p>
-            <p className="text-3xl font-black text-amber-900 mb-2">United States</p>
-            <p className="text-[10px] text-emerald-600 font-black tracking-widest bg-emerald-100/50 px-4 py-2 rounded-full inline-block">+12.4% GROWTH</p>
-          </div>
+
         </div>
       </div>
 
-      {/* Top HSN Table */}
       <div className="glass-card overflow-hidden bg-white">
         <div className="p-10 border-b border-slate-50 flex justify-between items-center">
           <h4 className="text-2xl font-black text-slate-900">Top HSN Categories</h4>

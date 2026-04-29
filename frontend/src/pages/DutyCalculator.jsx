@@ -117,12 +117,11 @@ const DutyCalculator = () => {
     })
     .then(data => {
       const val = parseFloat(value);
-      // Backend returns total_tax, we can break it down for the UI
       setCalculation({
         base_value: val,
-        basic_duty: data.total_tax * 0.7, // Visual breakdown
-        gst_vat: data.total_tax * 0.2,   // Visual breakdown
-        other_taxes: data.total_tax * 0.1, // Visual breakdown
+        basic_duty: data.total_tax * 0.7, 
+        gst_vat: data.total_tax * 0.2,   
+        other_taxes: data.total_tax * 0.1,
         total_taxes: data.total_tax,
         currency: data.currency
       });
@@ -211,36 +210,28 @@ const DutyCalculator = () => {
                     <p className="text-lg font-black text-slate-900">{destination}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="bg-emerald-50 text-emerald-600 text-[10px] px-4 py-2 rounded-full font-black uppercase tracking-widest border border-emerald-100">FTA Optimized</span>
-                </div>
               </div>
 
               <div className="space-y-8">
                 <div className="flex justify-between items-center text-xl">
                   <span className="text-slate-500 font-medium">Basic Customs Duty (Est.)</span>
-                  <span className="text-slate-900 font-black">${calculation.basic_duty.toLocaleString()}</span>
+                  <span className="text-slate-900 font-black">${(calculation.basic_duty || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-xl">
                   <span className="text-slate-500 font-medium">VAT / GST (Est.)</span>
-                  <span className="text-slate-900 font-black">${calculation.gst_vat.toLocaleString()}</span>
+                  <span className="text-slate-900 font-black">${(calculation.gst_vat || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center text-xl">
                   <span className="text-slate-500 font-medium">Surcharge & Other Taxes</span>
-                  <span className="text-slate-900 font-black">${calculation.other_taxes.toLocaleString()}</span>
+                  <span className="text-slate-900 font-black">${(calculation.other_taxes || 0).toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-8 border-t border-slate-100 text-3xl">
                   <span className="text-slate-900 font-black">Total Estimated Duty</span>
-                  <span className="text-amber-600 font-black">${calculation.total_taxes.toLocaleString()} {calculation.currency}</span>
+                  <span className="text-amber-600 font-black">${(calculation.total_taxes || 0).toLocaleString()} {calculation.currency || 'USD'}</span>
                 </div>
               </div>
 
-              <div className="mt-12 p-8 rounded-3xl bg-slate-50 border border-slate-100 flex items-start gap-5">
-                <Info className="text-amber-500 shrink-0 mt-1" size={24} />
-                <p className="text-sm text-slate-500 leading-relaxed font-medium">
-                  Note: This is a system-calculated estimate based on the provided HSN code and trade corridor. Actual values may vary at the point of entry and are subject to official customs audit.
-                </p>
-              </div>
+
             </div>
           ) : (
             <div className="glass-card p-12 h-full flex flex-col items-center justify-center text-center bg-white">
@@ -255,5 +246,4 @@ const DutyCalculator = () => {
     </div>
   );
 };
-
 export default DutyCalculator;

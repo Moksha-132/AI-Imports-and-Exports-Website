@@ -30,9 +30,15 @@ const ShipmentTracking = () => {
       });
   }, []);
 
-  const filteredShipments = Array.isArray(shipments) ? shipments.filter(s => 
-    filter === 'All' || s.type === filter || (filter === 'Delayed' && s.status === 'Delayed')
-  ) : [];
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredShipments = Array.isArray(shipments) ? shipments.filter(s => {
+    const matchesFilter = filter === 'All' || s.type === filter || (filter === 'Delayed' && s.status === 'Delayed');
+    const matchesSearch = s.shipment_id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         s.origin.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         s.destination.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  }) : [];
 
   return (
     <div className="space-y-8 pb-12">
@@ -51,6 +57,8 @@ const ShipmentTracking = () => {
             <input 
               type="text" 
               placeholder="Track Container/AWB..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-sm w-full md:w-96 outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm font-medium"
             />
           </div>

@@ -5,21 +5,11 @@ from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
 load_dotenv()
-
-# Default to SQLite for easy development, but allow PostgreSQL via env var
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./trade_intel.db")
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    # check_same_thread is only needed for SQLite
-    connect_args={"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
-)
-
+DB_URL = os.getenv("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/postgres")
+engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 Base = declarative_base()
-
-def get_db():
+def get_database_session():
     db = SessionLocal()
     try:
         yield db

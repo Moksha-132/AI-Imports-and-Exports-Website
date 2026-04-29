@@ -12,6 +12,7 @@ import Analytics from './pages/Analytics';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import LandingPage from './pages/LandingPage';
+import Ledger from './pages/Ledger';
 import HowItWorks from './pages/HowItWorks';
 import Features from './pages/Features';
 import About from './pages/About';
@@ -38,18 +39,6 @@ const DashboardLayout = () => {
           </div>
           
           <div className="flex items-center gap-6">
-            <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search shipments..." 
-                className="bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 w-72 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 transition-all shadow-sm"
-              />
-            </div>
-            <button className="relative p-3 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-amber-500 transition-colors shadow-sm">
-              <Bell size={22} />
-              <span className="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-amber-500 rounded-full border-2 border-white"></span>
-            </button>
             <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
               <div className="text-right">
                 <p className="text-sm font-bold text-slate-900">Moksha</p>
@@ -72,6 +61,7 @@ const DashboardLayout = () => {
             <Route path="risk" element={<RiskAnalysis />} />
             <Route path="shipment" element={<ShipmentTracking />} />
             <Route path="analytics" element={<Analytics />} />
+            <Route path="ledger" element={<Ledger />} />
           </Routes>
         </div>
       </main>
