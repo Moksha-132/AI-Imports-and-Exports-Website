@@ -36,12 +36,8 @@ class HSNEngine:
             "ai_logic": f"Sim: {score:.2%}",
             "explanation": self._reason(text, match, score)
         }
-engine = None
+engine = HSNEngine()
 def get_hsn(text):
-    global engine
-    if engine is None: engine = HSNEngine()
     return engine.classify(text)
 def lookup_hsn(code):
-    global engine
-    if engine is None: engine = HSNEngine()
     return engine.lookup(code)

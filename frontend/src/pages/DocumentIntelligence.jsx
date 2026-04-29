@@ -35,14 +35,20 @@ const DocumentIntelligence = () => {
       return res.json();
     })
     .then(data => {
+      let ext = data.extracted_data || {};
+      if (typeof ext === 'string') {
+        try { ext = JSON.parse(ext); } catch(e) { ext = {}; }
+      }
+      
+      // Use top-level fields first, then nested ones
       setExtractedData({
         id: data.id,
-        invoice_number: data.extracted_data?.invoice_no || "INV-2026-001",
-        date: new Date().toLocaleDateString(),
-        sender: data.extracted_data?.vendor || "AI Export Pvt Ltd",
-        total_value: data.extracted_data?.amount ? `$${parseFloat(data.extracted_data.amount).toLocaleString()}` : "$0.00",
+        invoice_number: data.invoice_no || ext.invoice_no || "Not Detected",
+        date: data.created_at ? new Date(data.created_at).toLocaleDateString() : new Date().toLocaleDateString(),
+        sender: data.vendor || ext.vendor || "Not Detected",
+        total_value: (data.amount || ext.amount) ? `$${parseFloat(data.amount || ext.amount).toLocaleString()}` : "—",
         status: data.status || "processed",
-        items: data.extracted_data?.items || []
+        items: ext.items || []
       });
       setIsUploading(false);
     })
@@ -74,7 +80,6 @@ const DocumentIntelligence = () => {
       setIsApproving(false);
     });
   };
-
   const updatePayment = (id, status) => {
     fetch(`http://localhost:8000/documents/${id}/payment`, {
       method: 'PATCH',
@@ -137,6 +142,18 @@ const DocumentIntelligence = () => {
                       <span className={`font-black text-lg ${item.highlight ? "text-amber-600" : "text-slate-900"}`}>{item.val}</span>
                     </div>
                   ))}
+
+                  {extractedData.items && extractedData.items.length > 0 && (
+                    <div className="mt-8 space-y-4">
+                      <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest block mb-2">Detected Line Items</span>
+                      {extractedData.items.map((item, i) => (
+                        <div key={i} className="p-4 rounded-2xl bg-amber-50/30 border border-amber-100/50 flex justify-between items-center">
+                          <span className="font-bold text-slate-800 text-sm truncate pr-4">{item.name}</span>
+                          <span className="bg-amber-100 text-amber-700 px-3 py-1 rounded-lg text-[10px] font-black">{item.hsn}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <button onClick={handleApprove} disabled={isApproving} className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-black uppercase tracking-widest w-full mt-10 py-5 rounded-2xl flex items-center justify-center gap-3">
                   {isApproving ? <Loader2 className="animate-spin" size={24} /> : <>Approve & Track <Send size={20} /></>}

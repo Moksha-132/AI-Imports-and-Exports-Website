@@ -1,31 +1,43 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ArrowRight, BarChart, CheckCircle2, FileText, Cpu, Shield, Globe, Zap, Truck, Search, Mail, Phone, Upload, ShieldCheck, Ship } from 'lucide-react';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.15 }
+  }
+};
+const fadeUpItem = {
+  hidden: { opacity: 0, y: 30 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+};
 const LandingPage = ({ onNavigate }) => {
   const navigate = useNavigate();
   return (
     <div id="top" className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-amber-200">
       <Navbar onNavigate={onNavigate} currentView="landing" />
-
-      {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-8 pt-24 pb-20 flex flex-col lg:flex-row items-center gap-16">
-        <div className="flex-1 space-y-10">
-          <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-amber-100">
+        <motion.div 
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+          className="flex-1 space-y-10"
+        >
+          <motion.div variants={fadeUpItem} className="inline-flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest border border-amber-100">
             <Zap size={14} /> AI-Powered Global Trade Intelligence
-          </div>
-          
-          <h1 className="text-6xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
+          </motion.div>
+          <motion.h1 variants={fadeUpItem} className="text-6xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
             Automate your <span className="text-amber-500">global trade</span> operations with enterprise AI intelligence.
-          </h1>
-          
-          <p className="text-xl text-slate-500 leading-relaxed max-w-2xl">
+          </motion.h1>
+          <motion.p variants={fadeUpItem} className="text-xl text-slate-500 leading-relaxed max-w-2xl">
             Streamline HSN classification, customs documentation, and risk assessment through a single unified intelligence ecosystem designed for modern exporters.
-          </p>
-
-          <div className="flex items-center gap-6 pt-4">
+          </motion.p>
+          <motion.div variants={fadeUpItem} className="flex items-center gap-6 pt-4">
             <button 
               onClick={() => navigate('/register')}
               className="bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-10 py-5 rounded-full flex items-center gap-3 shadow-xl shadow-amber-400/20 transition-all active:scale-95 text-lg group"
@@ -41,9 +53,8 @@ const LandingPage = ({ onNavigate }) => {
             >
               Explore Platform
             </button>
-          </div>
-
-          <div className="flex items-center gap-12 pt-10 border-t border-slate-200">
+          </motion.div>
+          <motion.div variants={fadeUpItem} className="flex items-center gap-12 pt-10 border-t border-slate-200">
             <div>
               <p className="text-3xl font-extrabold text-slate-900">98%</p>
               <p className="text-sm text-slate-500 font-medium mt-1">OCR Accuracy</p>
@@ -52,13 +63,16 @@ const LandingPage = ({ onNavigate }) => {
               <p className="text-3xl font-extrabold text-slate-900">24/7</p>
               <p className="text-sm text-slate-500 font-medium mt-1">Customs Monitoring</p>
             </div>
-          </div>
-        </div>
-
-        <div className="flex-1 relative lg:-mt-48">
+          </motion.div>
+        </motion.div>
+        <motion.div 
+          initial={{ opacity: 0, x: 50, rotate: 2 }}
+          animate={{ opacity: 1, x: 0, rotate: 0 }}
+          transition={{ duration: 1, delay: 0.3, type: "spring", stiffness: 50 }}
+          className="flex-1 relative lg:-mt-48"
+        >
           <div className="absolute -inset-4 bg-amber-400/10 rounded-[2.5rem] blur-2xl"></div>
           <div className="relative bg-[#0F172A] rounded-[2rem] shadow-2xl overflow-hidden border border-slate-800">
-            {/* Live View Mockup */}
             <div className="p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-slate-700 pb-6">
                 <div>
@@ -70,7 +84,6 @@ const LandingPage = ({ onNavigate }) => {
                   <p className="text-2xl font-bold text-emerald-400">Secure</p>
                 </div>
               </div>
-
               <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 flex items-center gap-4">
                 <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20">
                   <BarChart className="text-amber-500" size={24} />
@@ -80,7 +93,6 @@ const LandingPage = ({ onNavigate }) => {
                   <p className="text-xs text-slate-400">8471.30.00 (99.2% match)</p>
                 </div>
               </div>
-
               <div className="space-y-4 pt-4">
                 <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Workflow Automations</p>
                 {[
@@ -94,32 +106,39 @@ const LandingPage = ({ onNavigate }) => {
                   </div>
                 ))}
               </div>
-
               <div className="pt-6">
                 <div className="flex justify-between items-end mb-2">
                   <span className="text-sm font-bold text-white">Document Processing</span>
                   <span className="text-sm font-bold text-amber-500">100%</span>
                 </div>
                 <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-[2px]">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: '100%' }}></div>
+                  <motion.div 
+                    initial={{ width: '0%' }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 1.5, delay: 1, ease: "easeOut" }}
+                    className="h-full bg-amber-500 rounded-full"
+                  />
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </section>
-
-      {/* How It Works Section */}
       <section id="how-it-works" className="max-w-7xl mx-auto px-8 py-32 border-t border-slate-100">
-        <div className="text-center space-y-6 max-w-3xl mx-auto mb-24">
-          <h2 className="text-5xl font-extrabold text-slate-900 leading-tight">
+        <motion.div 
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="text-center space-y-6 max-w-3xl mx-auto mb-24"
+        >
+          <motion.h2 variants={fadeUpItem} className="text-5xl font-extrabold text-slate-900 leading-tight">
             Simple, automated, <span className="text-amber-500 italic font-serif">intelligent</span>.
-          </h2>
-          <p className="text-xl text-slate-500 leading-relaxed">
+          </motion.h2>
+          <motion.p variants={fadeUpItem} className="text-xl text-slate-500 leading-relaxed">
             Discover how Shnoor transforms messy document workflows into a streamlined intelligence engine.
-          </p>
-        </div>
-
+          </motion.p>
+        </motion.div>
         <div className="space-y-32">
           {[
             { step: "01", title: "Digital Intake", desc: "Upload your invoices, packing lists, and certificates in any format. Our Document AI immediately extracts key data points.", icon: Upload, color: "bg-amber-500" },
@@ -127,7 +146,14 @@ const LandingPage = ({ onNavigate }) => {
             { step: "03", title: "Compliance Check", desc: "Every transaction is screened against global sanctions, risk profiles, and local jurisdiction requirements.", icon: ShieldCheck, color: "bg-amber-500" },
             { step: "04", title: "Logistics Oversight", desc: "Monitor your shipments in real-time. Get predictive alerts on potential delays and track your trade performance.", icon: Ship, color: "bg-slate-900" }
           ].map((item, i) => (
-            <div key={i} className={`flex flex-col ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-20`}>
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.7, delay: i * 0.1 }}
+              key={i} 
+              className={`flex flex-col ${i % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-20`}
+            >
               <div className="flex-1 space-y-8">
                 <span className="text-8xl font-black text-slate-100 block leading-none">{item.step}</span>
                 <div className="space-y-4">
@@ -135,29 +161,41 @@ const LandingPage = ({ onNavigate }) => {
                   <p className="text-lg text-slate-600 leading-relaxed">{item.desc}</p>
                 </div>
               </div>
-              <div className="flex-1 flex justify-center">
-                <div className={`w-64 h-64 ${item.color} rounded-[3rem] shadow-2xl flex items-center justify-center text-white rotate-3 hover:rotate-0 transition-transform duration-500`}>
+              <motion.div 
+                whileHover={{ scale: 1.05, rotate: 0 }}
+                className="flex-1 flex justify-center"
+              >
+                <div className={`w-64 h-64 ${item.color} rounded-[3rem] shadow-2xl flex items-center justify-center text-white rotate-3 hover:rotate-0 transition-all duration-500`}>
                   <item.icon size={80} strokeWidth={1.5} />
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           ))}
         </div>
       </section>
-
-      {/* Features Section */}
       <section id="features" className="bg-slate-900 py-32 px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center space-y-6 max-w-3xl mx-auto mb-24">
-            <h2 className="text-5xl font-extrabold text-white leading-tight">
+          <motion.div 
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="text-center space-y-6 max-w-3xl mx-auto mb-24"
+          >
+            <motion.h2 variants={fadeUpItem} className="text-5xl font-extrabold text-white leading-tight">
               Powerful tools for <span className="text-amber-500">global logistics</span>.
-            </h2>
-            <p className="text-xl text-slate-400">
+            </motion.h2>
+            <motion.p variants={fadeUpItem} className="text-xl text-slate-400">
               Our modular intelligence platform provides everything you need to automate customs and classify products.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            </motion.p>
+          </motion.div>
+          <motion.div 
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={staggerContainer}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
             {[
               { title: "Document AI & OCR", desc: "Instant extraction of data from invoices, packing lists, and B/L with machine learning.", icon: FileText },
               { title: "AI HSN Classifier", desc: "Identify the correct 6, 8, or 10-digit HSN codes with over 99% accuracy.", icon: Search },
@@ -166,7 +204,11 @@ const LandingPage = ({ onNavigate }) => {
               { title: "End-to-End Tracking", desc: "Real-time monitoring of air, sea, and land shipments with automated alerts.", icon: Zap },
               { title: "Advanced Analytics", desc: "Visualize your trade volume, duty savings, and operational performance.", icon: BarChart }
             ].map((feature, i) => (
-              <div key={i} className="bg-slate-800 p-10 rounded-[3rem] border border-white/5 shadow-xl group hover:border-amber-500/50 transition-all">
+              <motion.div 
+                variants={fadeUpItem}
+                key={i} 
+                className="bg-slate-800 p-10 rounded-[3rem] border border-white/5 shadow-xl group hover:border-amber-500/50 transition-all"
+              >
                 <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500 mb-8 group-hover:scale-110 transition-transform">
                   <feature.icon size={28} />
                 </div>
@@ -175,13 +217,11 @@ const LandingPage = ({ onNavigate }) => {
                 <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
                   <CheckCircle2 className="text-amber-500" size={16} /> Enterprise Grade
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
-
-      {/* About Section */}
       <section id="about" className="bg-white py-32 px-8 overflow-hidden relative border-t border-slate-100">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-24 relative z-10">
           <div className="space-y-10">
@@ -211,28 +251,49 @@ const LandingPage = ({ onNavigate }) => {
           </div>
         </div>
       </section>
-
-      {/* CTA Section - Restoring from Premium Design */}
-      <section className="py-40 px-8">
-        <div className="max-w-5xl mx-auto bg-amber-400 rounded-[4rem] p-24 text-center space-y-12 shadow-2xl shadow-amber-400/30">
-          <h2 className="text-6xl font-black text-slate-900 tracking-tight leading-tight">
-            Ready to automate your <br /> global supply chain?
-          </h2>
-          <p className="text-xl text-slate-900/70 font-medium max-w-2xl mx-auto leading-relaxed">
-            Join hundreds of global enterprises using Shnoor to streamline their international trade operations.
-          </p>
-          <button 
-            onClick={() => navigate('/register')}
-            className="bg-slate-900 text-white px-12 py-6 rounded-[2rem] text-xl font-black shadow-2xl hover:scale-105 transition-all active:scale-95"
+      <section className="py-40 px-8 overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 50 }}
+          whileInView={{ opacity: 1, scale: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="max-w-5xl mx-auto bg-amber-400 rounded-[4rem] p-24 text-center space-y-12 shadow-2xl shadow-amber-400/30"
+        >
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-6xl font-black text-slate-900 tracking-tight leading-tight"
           >
-            Start Your Journey
-          </button>
-        </div>
+            Ready to automate your <br /> global supply chain?
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+            className="text-xl text-slate-900/70 font-medium max-w-2xl mx-auto leading-relaxed"
+          >
+            Join hundreds of global enterprises using Shnoor to streamline their international trade operations.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            <button 
+              onClick={() => navigate('/register')}
+              className="bg-slate-900 text-white px-12 py-6 rounded-[2rem] text-xl font-black shadow-2xl hover:scale-105 transition-all active:scale-95"
+            >
+              Start Your Journey
+            </button>
+          </motion.div>
+        </motion.div>
       </section>
-
       <Footer onNavigate={onNavigate} />
     </div>
   );
 };
-
 export default LandingPage;

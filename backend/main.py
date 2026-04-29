@@ -1,187 +1,214 @@
-import logging, datetime as dt
-from typing import List, Optional
+import logging
+import datetime
+from typing import Optional
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from database import get_database_session
 import models
-api = FastAPI()
-api.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
-logging.basicConfig(level=logging.INFO, format="%(message)s")
-log = logging.getLogger("trade-api")
-@api.post("/documents", status_code=201)
-async def upload_handler(file: UploadFile = File(...), db = Depends(get_database_session)):
-    from ocr_engine import process
-    raw_content = await file.read()
-    extracted = process(raw_content, file.filename)
-    new_doc = models.Document(
+from hsn_engine import get_hsn, lookup_hsn
+from trade_constants import COUNTRY_RISK, DUTY_TABLE
+
+app = FastAPI(title="Shnoor Trade Intelligence API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
+logging.basicConfig(
+    level=logging.INFO, 
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+log = logging.getLogger("TradeIntelligence")
+def calc_ts(o_cty, d_cty, ovr_ct, pd_ct, tot_doc):
+    o_rsk = COUNTRY_RISK.get(o_cty.lower().strip(), 15)
+    d_rsk = COUNTRY_RISK.get(d_cty.lower().strip(), 10)    
+    rt_rsk = 10 if (o_rsk >= 20 and d_rsk >= 15) else 0  
+    score = 100.0
+    score -= o_rsk
+    score -= (d_rsk * 0.5)
+    score -= rt_rsk
+    score -= ovr_ct * 15
+    score -= (tot_doc - pd_ct - ovr_ct) * 2
+    score += min(pd_ct * 3, 20)    
+    return round(max(0.0, min(100.0, score)), 1)
+@app.post("/documents", status_code=201)
+async def upload_document(file: UploadFile = File(...), db=Depends(get_database_session)):
+    from ocr_engine import process   
+    f_bytes = await file.read()
+    ext_d = process(f_bytes, file.filename)   
+    ext_d["invoice_no"] = ext_d.get("invoice_no") or "Not Detected"
+    ext_d["vendor"] = ext_d.get("vendor") or "Not Detected"
+    ext_d["amount"] = ext_d.get("amount") or 0.0
+    
+    doc = models.Document(
         filename=file.filename,
         file_type=file.content_type or "unknown",
-        extracted_data=extracted,
-        humanized_summary=extracted.get("humanized_summary"),
-        client_name=extracted.get("client_name", "Primary Client"),
+        extracted_data=ext_d,
+        humanized_summary=ext_d.get("humanized_summary"),
+        client_name=ext_d.get("client_name", "Primary Client"),
         status="processed"
-    )
+    )   
     try:
-        db.add(new_doc)
+        db.add(doc)
         db.commit()
-        db.refresh(new_doc)
-        biz_name = extracted.get("vendor", "Unknown Entity")
-        if biz_name == "Unknown Entity": biz_name = f"New Entity {new_doc.id}"
-        try:
-            v_docs = [d for d in db.query(models.Document).all() if d.extracted_data and d.extracted_data.get("vendor") == biz_name]
-            lates = len([d for d in v_docs if d.payment_status == "overdue"])
-            trust = 95.0
-            if lates > 0: trust = 60.0 - (lates * 10)
-            elif not any(k in biz_name for k in ["Global", "Precision"]): trust = 78.5
-            risk_lvl = "Low" if trust > 80 else ("Medium" if trust > 50 else "High")
-            alert_msg = f"Auto-scan: {biz_name} verified."
-            if lates > 0: alert_msg = f"CRITICAL: {biz_name} has {lates} overdue payments."
-            existing = db.query(models.RiskAlert).filter(models.RiskAlert.entity_name == biz_name).first()
-            if existing:
-                existing.trust_score, existing.risk_level, existing.message = max(0, trust), risk_lvl, alert_msg
-            else:
-                db.add(models.RiskAlert(entity_name=biz_name, risk_level=risk_lvl, trust_score=max(0, trust), message=alert_msg))
-            db.commit()
-        except Exception as risk_err:
-            log.warning(f"Risk sync failed: {risk_err}")
-        return new_doc
-    except Exception as err:
+        db.refresh(doc)       
+        return {
+            "id": doc.id,
+            "filename": doc.filename,
+            "status": doc.status,
+            "invoice_no": ext_d.get("invoice_no"),
+            "vendor": ext_d.get("vendor"),
+            "amount": ext_d.get("amount"),
+            "extracted_data": ext_d,
+            "created_at": doc.created_at.isoformat() if doc.created_at else None
+        }
+    except Exception as db_err:
         db.rollback()
-        log.error(f"Failed to process upload: {err}")
-        raise HTTPException(500, str(err))
-@api.get("/documents")
-async def list_documents(db = Depends(get_database_session)):
+        log.error(f"Document upload failed: {db_err}")
+        raise HTTPException(status_code=500, detail="Failed to save document.")
+@app.get("/documents")
+async def list_documents(db=Depends(get_database_session)):
     return db.query(models.Document).order_by(models.Document.created_at.desc()).all()
-@api.post("/documents/{doc_id}/approve")
-async def handle_approval(doc_id: int, db = Depends(get_database_session)):
-    target = db.query(models.Document).filter(models.Document.id == doc_id).first()
-    if not target: raise HTTPException(404, "Document not found")
-    meta = target.extracted_data
-    shp = models.Shipment(
-        shipment_id=f"SHP-{meta.get('invoice_no', 'UNK')}",
-        origin=meta.get('vendor', 'Global Vendor'),
-        destination=meta.get('destination', 'Global Distribution'),
-        client_name=meta.get('client_name', 'Primary Client'),
-        type=meta.get('transport_mode', 'Sea'),
-        status="Processed" if target.payment_status == "paid" else "Pending",
-        eta=dt.datetime.utcnow() + dt.timedelta(days=7)
-    )
-    db.add(shp)
-    db.commit()
-    target.shipment_id = shp.id
-    db.commit()
-    return {"ok": True, "sid": shp.shipment_id}
-@api.patch("/documents/{doc_id}/payment")
-async def update_payment(doc_id: int, payload: dict, db = Depends(get_database_session)):
-    target = db.query(models.Document).filter(models.Document.id == doc_id).first()
-    if not target: raise HTTPException(404, "Document not found")
-    new_status = payload.get("status", "unpaid")
-    target.payment_status = new_status
-    if new_status == "paid": 
-        target.paid_at = dt.datetime.utcnow()
-        if target.shipment: target.shipment.status = "Processed"
-    else:
-        if target.shipment: target.shipment.status = "Pending"
-    db.commit()
-    return {"status": "updated", "payment_status": target.payment_status, "shipment_status": target.shipment.status if target.shipment else None}
-@api.post("/hsn")
-async def hsn_lookup(body: dict, db = Depends(get_database_session)):
-    from hsn_engine import get_hsn
-    txt = body.get("description", "")
-    match = get_hsn(txt)
-    db.add(models.HSNResult(
-        product_desc=match["product_desc"],
-        hsn_code=match["hsn_code"],
-        confidence=match["confidence"],
-        ai_logic=match["ai_logic"],
-        explanation=match.get("explanation", "")
-    ))
-    db.commit()
-    return {"hsn_code": match["hsn_code"], "product_desc": match["product_desc"], "confidence": match["confidence"], "ai_logic": match["ai_logic"]}
-@api.post("/duty")
-async def tax_engine(req_data: dict, db = Depends(get_database_session)):
-    loc = req_data.get("destination", "singapore").lower().strip()
-    val = float(req_data.get("value", 0))
-    code = req_data.get("hsn_code", "")
-    table = {
-        "united states": [0.02, 0.00], "canada": [0.05, 0.12], "mexico": [0.10, 0.16],
-        "germany": [0.00, 0.19], "france": [0.00, 0.20], "united kingdom": [0.04, 0.20],
-        "italy": [0.00, 0.22], "spain": [0.00, 0.21], "netherlands": [0.00, 0.21],
-        "switzerland": [0.02, 0.08], "turkey": [0.15, 0.18], "russia": [0.12, 0.20],
-        "china": [0.08, 0.13], "india": [0.15, 0.18], "japan": [0.03, 0.10],
-        "singapore": [0.00, 0.09], "australia": [0.05, 0.10], "south korea": [0.08, 0.10],
-        "vietnam": [0.20, 0.10], "thailand": [0.15, 0.07], "indonesia": [0.15, 0.11],
-        "malaysia": [0.10, 0.06], "philippines": [0.12, 0.12], "new zealand": [0.05, 0.15],
-        "saudi arabia": [0.05, 0.15], "united arab emirates": [0.05, 0.05], "israel": [0.05, 0.17],
-        "south africa": [0.15, 0.15], "egypt": [0.20, 0.14], "nigeria": [0.25, 0.07],
-        "kenya": [0.25, 0.16], "ghana": [0.20, 0.15],
-        "brazil": [0.35, 0.18], "argentina": [0.35, 0.21], "chile": [0.06, 0.19],
-        "colombia": [0.15, 0.19], "peru": [0.06, 0.18]
-    }
-    r = table.get(loc, [0.12, 0.15])
-    d_rate, t_rate = r[0], r[1]
-    if code.startswith(("61", "62")): d_rate += 0.05 
-    elif code.startswith("85"): d_rate = max(0, d_rate - 0.02) 
-    d_val = val * d_rate
-    t_val = (val + d_val) * t_rate 
-    out = {"country": loc.title(), "hsn_code": code, "currency": "USD", "basic_duty": d_val, "additional_tax": t_val, "total_tax": d_val + t_val}
+@app.post("/documents/{doc_id}/approve")
+async def approve_document(doc_id: int, db=Depends(get_database_session)):
+    doc = db.query(models.Document).filter(models.Document.id == doc_id).first()
+    if not doc: raise HTTPException(status_code=404)        
+    ext, try_sc = doc.extracted_data or {}, 0
     try:
-        db.add(models.Duty(**out))
-        db.commit()
-    except: db.rollback()
-    return out
-@api.get("/analytics")
-async def fetch_stats(db = Depends(get_database_session)):
-    items = db.query(models.Document).all()
-    total_vol, hsn_map, monthly_data = 0.0, {}, [0.0] * 12
-    for i in items:
-        if not i.extracted_data: continue
-        raw_val = i.extracted_data.get('amount')
-        val = float(raw_val) if raw_val is not None else 0.0
-        total_vol += val
-        m_idx = i.created_at.month - 1
-        monthly_data[m_idx] += val
-        codes = i.extracted_data.get('hsn_codes', []) or []
-        for c in codes:
-            if c not in hsn_map: hsn_map[c] = {"c": 0, "v": 0.0}
-            hsn_map[c]["c"] += 1
-            hsn_map[c]["v"] += val
-    from hsn_engine import lookup_hsn
-    top_list = []
-    ranked = sorted(hsn_map.items(), key=lambda x: x[1]["v"], reverse=True)[:5]
-    for k, v in ranked:
-        h_info = lookup_hsn(k)
-        top_list.append({
-            "code": k, 
-            "category": h_info.get("description", "General Trade Item") if h_info else "General Trade Item", 
-            "vol": f"${v['v']:,.0f}", 
-            "count": v["c"],
-            "duty": "Variable"
-        })
-    return {
-        "total_trade_volume": f"${total_vol:,.2f}", 
-        "duty_saved": f"${total_vol * 0.08:,.2f}", 
-        "docs_processed": str(len(items)), 
-        "top_hsn_categories": top_list,
-        "monthly_breakdown": monthly_data
-    }
-@api.get("/risk")
-async def get_alerts(name: Optional[str] = None, db = Depends(get_database_session)):
-    f = db.query(models.RiskAlert)
-    if name: f = f.filter(models.RiskAlert.entity_name.ilike(f"%{name}%"))
-    return f.all()
-@api.get("/shipments")
-async def list_shipments(db = Depends(get_database_session)):
-    return db.query(models.Shipment).all()
-@api.post("/shipments")
-async def add_shipment(payload: dict, db = Depends(get_database_session)):
-    s = models.Shipment(**payload)
-    db.add(s)
+        v_nm = ext.get("vendor", "Unknown")
+        vd = [d for d in db.query(models.Document).all() if d.extracted_data and d.extracted_data.get("vendor") == v_nm]
+        ov, pd, tot = len([d for d in vd if d.payment_status == "overdue"]), len([d for d in vd if d.payment_status == "paid"]), len(vd)
+        o, d = ext.get("origin", "India"), ext.get("destination", "Germany")
+        sc = calc_ts(o, d, ov, pd, tot)
+        lvl = "Low" if sc > 80 else ("Medium" if sc > 50 else "High")
+        msg = f"Cleared. Route: {o} → {d}." if sc > 70 else f"Route {o} → {d} carries risk. Score: {sc}"
+        
+        alt = db.query(models.RiskAlert).filter(models.RiskAlert.entity_name == v_nm).first()
+        if alt: alt.trust_score, alt.risk_level, alt.message = sc, lvl, msg
+        else: db.add(models.RiskAlert(entity_name=v_nm, risk_level=lvl, trust_score=sc, message=msg))
+        
+        sid = f"SHP-{ext.get('invoice_no', 'UNK')}-{doc.id}"
+        shp = models.Shipment(shipment_id=sid, origin=v_nm, destination=d, type=ext.get("transport_mode", "Sea"), status="Pending", eta=datetime.datetime.now(datetime.timezone.utc)+datetime.timedelta(days=7))
+        db.add(shp); db.commit(); doc.shipment_id = shp.id; db.commit()
+        return {"status": "success", "tracking_id": sid}
+    except Exception as e:
+        db.rollback(); log.error(f"Approve Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+@app.patch("/documents/{doc_id}/payment")
+async def update_payment(doc_id: int, payload: dict, db=Depends(get_database_session)):
+    doc = db.query(models.Document).filter(models.Document.id == doc_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found.")       
+    n_stat = payload.get("status", "unpaid")
+    doc.payment_status = n_stat  
+    if n_stat == "paid":
+        doc.paid_at = datetime.datetime.now(datetime.timezone.utc)
+        if doc.shipment:
+            doc.shipment.status = "Processed"
+    else:
+        if doc.shipment:
+            doc.shipment.status = "Pending"         
     db.commit()
-    db.refresh(s)
-    return s
-@api.get("/health")
-async def ping(): return {"status": "online"}
+    return {"status": "ok", "payment_status": doc.payment_status}
+@app.post("/hsn")
+async def classify_hsn(data: dict, db=Depends(get_database_session)):
+    q = data.get("description", "")
+    res = get_hsn(q)   
+    db.add(models.HSNResult(
+        product_desc=res["product_desc"],
+        hsn_code=res["hsn_code"],
+        confidence=res["confidence"],
+        ai_logic=res["ai_logic"],
+        explanation=res.get("explanation", "")
+    ))
+    db.commit()   
+    return res
+@app.post("/duty")
+async def calculate_duty(data: dict, db=Depends(get_database_session)):
+    dest = data.get("destination", "singapore").lower().strip()
+    inv_val = float(data.get("value", 0))
+    h_code = data.get("hsn_code", "")
+    rts = DUTY_TABLE.get(dest, [0.12, 0.15])
+    d_rt = rts[0]
+    v_rt = rts[1] 
+    if h_code.startswith(("61", "62")):
+        d_rt += 0.05
+    elif h_code.startswith("85"):
+        d_rt = max(0, d_rt - 0.02)    
+    b_duty = inv_val * d_rt
+    a_tax = (inv_val + b_duty) * v_rt
+    res = {
+        "country": dest.title(),
+        "hsn_code": h_code,
+        "currency": "USD",
+        "basic_duty": b_duty,
+        "additional_tax": a_tax,
+        "total_tax": b_duty + a_tax
+    }
+    try:
+        db.add(models.Duty(**res))
+        db.commit()
+    except Exception:
+        db.rollback()    
+    return res
+@app.get("/analytics")
+async def get_analytics(db=Depends(get_database_session)):
+    all_docs = db.query(models.Document).all()   
+    t_vol = 0.0
+    h_map = {}
+    m_tots = [0.0] * 12 
+    for doc in all_docs:
+        if not doc.extracted_data:
+            continue        
+        raw_amt = doc.extracted_data.get("amount")
+        amt = float(raw_amt) if raw_amt is not None else 0.0     
+        t_vol += amt
+        m_tots[doc.created_at.month - 1] += amt  
+        codes = doc.extracted_data.get("hsn_codes", []) or []
+        for c in codes:
+            if c not in h_map:
+                h_map[c] = {"count": 0, "volume": 0.0}
+            h_map[c]["count"] += 1
+            h_map[c]["volume"] += amt        
+    top_cats = []
+    top_c = sorted(h_map.items(), key=lambda x: x[1]["volume"], reverse=True)[:5]
+    for c, stats in top_c:
+        dtls = lookup_hsn(c)
+        cat_nm = dtls.get("description", "Item") if dtls else "Item"
+        top_cats.append({
+            "code": c,
+            "category": cat_nm,
+            "vol": f"${stats['volume']:,.0f}",
+            "count": stats["count"],
+            "duty": "Var"
+        })    
+    return {
+        "total_trade_volume": f"${t_vol:,.2f}",
+        "duty_saved": f"${t_vol * 0.08:,.2f}",
+        "docs_processed": str(len(all_docs)),
+        "top_hsn_categories": top_cats,
+        "monthly_breakdown": m_tots
+    }
+@app.get("/risk")
+async def get_risk_alerts(search: Optional[str] = None, db=Depends(get_database_session)):
+    q = db.query(models.RiskAlert)
+    if search:
+        q = q.filter(models.RiskAlert.entity_name.ilike(f"%{search}%"))
+    return q.all()
+@app.get("/shipments")
+async def get_shipments(db=Depends(get_database_session)):
+    res = []
+    shps = db.query(models.Shipment).all()
+    for s in shps:
+        d = db.query(models.Document).filter(models.Document.shipment_id == s.id).first()
+        s_data = {c.name: getattr(s, c.name) for c in s.__table__.columns}
+        s_data["payment_status"] = d.payment_status if d else "unpaid"
+        res.append(s_data)
+    return res
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "timestamp": datetime.datetime.now(datetime.timezone.utc)}
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(api, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
