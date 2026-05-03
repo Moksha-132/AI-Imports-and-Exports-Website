@@ -10,6 +10,7 @@ class User(Base):
     hashed_password = Column(String)
     role = Column(String, default="staff")
     created_at = Column(DateTime, default=datetime.utcnow)
+
 class Shipment(Base):
     __tablename__ = "shipments"
     id = Column(Integer, primary_key=True)
@@ -25,6 +26,7 @@ class Shipment(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"))
     documents = relationship("Document", back_populates="shipment")
+
 class Document(Base):
     __tablename__ = "documents"
     id = Column(Integer, primary_key=True)
@@ -42,6 +44,7 @@ class Document(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     shipment = relationship("Shipment", back_populates="documents")
     created_at = Column(DateTime, default=datetime.utcnow)
+
 class HSNResult(Base):
     __tablename__ = "hsn_results"
     id = Column(Integer, primary_key=True)
@@ -52,6 +55,7 @@ class HSNResult(Base):
     explanation = Column(String)
     user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
+
 class Duty(Base):
     __tablename__ = "duties"
     id = Column(Integer, primary_key=True)
@@ -63,6 +67,7 @@ class Duty(Base):
     currency = Column(String, default="USD")
     user_id = Column(Integer, ForeignKey("users.id"))
     last_updated = Column(DateTime, default=datetime.utcnow)
+    
 class RiskAlert(Base):
     __tablename__ = "risk_alerts"
     id = Column(Integer, primary_key=True)
