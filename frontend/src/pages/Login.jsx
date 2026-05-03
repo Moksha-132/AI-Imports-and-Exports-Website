@@ -8,13 +8,32 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setError('');
+    try {
+      const response = await fetch('http://localhost:8000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('user_id', data.user_id);
+        localStorage.setItem('full_name', data.full_name);
+        navigate('/dashboard');
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Invalid credentials');
+      }
+    } catch (err) {
+      setError('Connection error');
+    } finally {
       setIsLoading(false);
-      navigate('/dashboard');
-    }, 1500);
+    }
   };
 
   return (
@@ -138,9 +157,16 @@ const Login = () => {
                     <input type="checkbox" className="w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500" />
                     <span className="text-sm text-slate-600 font-medium group-hover:text-slate-900 transition-colors">Remember me</span>
                   </label>
-                  <a href="#" className="text-sm font-bold text-amber-600 hover:text-amber-700 transition-colors">Forgot password?</a>
+                  <button 
+                    type="button"
+                    onClick={() => navigate('/forgot-password')}
+                    className="text-sm font-bold text-amber-600 hover:text-amber-700 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
                 </div>
 
+                {error && <p className="text-red-500 text-sm font-bold text-center mt-2">{error}</p>}
                 <button 
                   type="submit" 
                   disabled={isLoading}

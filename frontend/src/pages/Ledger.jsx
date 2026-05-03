@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { DollarSign, FileText, Calendar, CheckCircle, AlertCircle, Clock, Filter, Download, ArrowRight, User } from 'lucide-react';
+import { apiFetch } from '../api';
+
 const Ledger = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+
   useEffect(() => {
-    fetch('http://localhost:8000/documents')
-      .then(res => res.json())
+    apiFetch('/documents')
       .then(data => {
         setTransactions(data);
         setLoading(false);
@@ -15,8 +17,9 @@ const Ledger = () => {
         setLoading(false);
       });
   }, []);
+
   const updatePayment = (id, status) => {
-    fetch(`http://localhost:8000/documents/${id}/payment`, {
+    apiFetch(`/documents/${id}/payment`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })

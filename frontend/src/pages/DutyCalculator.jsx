@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Calculator, Globe2, ArrowRight, Info, DollarSign, Search, ChevronRight, AlertCircle } from 'lucide-react';
+import { apiFetch } from '../api';
+
 const COUNTRIES = [
     "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
     "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
@@ -26,6 +28,7 @@ const COUNTRIES = [
     "Yemen",
     "Zambia", "Zimbabwe"
 ];
+
 const SearchableDropdown = ({ label, value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -60,6 +63,7 @@ const SearchableDropdown = ({ label, value, onChange, options }) => {
     </div>
   );
 };
+
 const DutyCalculator = () => {
   const [origin, setOrigin] = useState('Singapore');
   const [destination, setDestination] = useState('United States');
@@ -68,17 +72,14 @@ const DutyCalculator = () => {
   const [calculation, setCalculation] = useState(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [error, setError] = useState(null);
+
   const handleCalculate = () => {
     setIsCalculating(true);
     setError(null);
-    fetch('http://localhost:8000/duty', {
+    
+    apiFetch('/duty', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ hsn_code: hsnCode, origin: origin, destination: destination, value: parseFloat(value) })
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Connection failed.");
-      return res.json();
     })
     .then(data => {
       const v = parseFloat(value);

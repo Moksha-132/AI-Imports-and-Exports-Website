@@ -12,13 +12,32 @@ const Register = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setTimeout(() => {
+    setError('');
+    try {
+      const response = await fetch('http://localhost:8000/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        localStorage.setItem('user_id', data.user_id);
+        localStorage.setItem('full_name', formData.fullName);
+        navigate('/dashboard');
+      } else {
+        const data = await response.json();
+        setError(data.detail || 'Registration failed');
+      }
+    } catch (err) {
+      setError('Connection error');
+    } finally {
       setIsLoading(false);
-      navigate('/dashboard');
-    }, 1500);
+    }
   };
 
   return (
@@ -76,7 +95,6 @@ const Register = () => {
               </div>
             ))}
           </div>
-
           <div className="p-8 rounded-3xl bg-amber-50 border border-amber-100 flex items-start gap-5">
             <div className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0">
               <CheckCircle2 size={24} />
@@ -89,8 +107,6 @@ const Register = () => {
             </div>
           </div>
         </div>
-
-        {/* Right Side: Register Form Card */}
         <div className="animate-in slide-in-from-right duration-700">
           <div className="bg-white p-12 rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
@@ -114,6 +130,8 @@ const Register = () => {
                         type="text" 
                         required
                         placeholder="John Doe"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({...formData, fullName: e.target.value})}
                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 outline-none focus:border-amber-500 focus:bg-white transition-all"
                       />
                     </div>
@@ -126,12 +144,13 @@ const Register = () => {
                         type="text" 
                         required
                         placeholder="Global Trade Inc"
+                        value={formData.company}
+                        onChange={(e) => setFormData({...formData, company: e.target.value})}
                         className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 outline-none focus:border-amber-500 focus:bg-white transition-all"
                       />
                     </div>
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 ml-1 uppercase tracking-wider">Email Address</label>
                   <div className="relative group">
@@ -140,11 +159,12 @@ const Register = () => {
                       type="email" 
                       required
                       placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 outline-none focus:border-amber-500 focus:bg-white transition-all"
                     />
                   </div>
                 </div>
-
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 ml-1 uppercase tracking-wider">Password</label>
                   <div className="relative group">
@@ -153,11 +173,13 @@ const Register = () => {
                       type="password" 
                       required
                       placeholder="Min 8 characters"
+                      value={formData.password}
+                      onChange={(e) => setFormData({...formData, password: e.target.value})}
                       className="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-12 pr-4 py-4 text-slate-900 outline-none focus:border-amber-500 focus:bg-white transition-all"
                     />
                   </div>
                 </div>
-
+                {error && <p className="text-red-500 text-sm font-bold text-center mt-4">{error}</p>}
                 <button 
                   type="submit" 
                   disabled={isLoading}

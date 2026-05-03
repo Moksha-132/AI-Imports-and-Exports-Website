@@ -23,6 +23,7 @@ class Shipment(Base):
     client_name = Column(String, default="Client Name")
     eta = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
+    user_id = Column(Integer, ForeignKey("users.id"))
     documents = relationship("Document", back_populates="shipment")
 class Document(Base):
     __tablename__ = "documents"
@@ -38,6 +39,7 @@ class Document(Base):
     due_date = Column(DateTime)
     paid_at = Column(DateTime)
     shipment_id = Column(Integer, ForeignKey("shipments.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
     shipment = relationship("Shipment", back_populates="documents")
     created_at = Column(DateTime, default=datetime.utcnow)
 class HSNResult(Base):
@@ -48,6 +50,7 @@ class HSNResult(Base):
     confidence = Column(Float)
     ai_logic = Column(String)
     explanation = Column(String)
+    user_id = Column(Integer, ForeignKey("users.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
 class Duty(Base):
     __tablename__ = "duties"
@@ -58,6 +61,7 @@ class Duty(Base):
     additional_tax = Column(Float)
     total_tax = Column(Float)
     currency = Column(String, default="USD")
+    user_id = Column(Integer, ForeignKey("users.id"))
     last_updated = Column(DateTime, default=datetime.utcnow)
 class RiskAlert(Base):
     __tablename__ = "risk_alerts"

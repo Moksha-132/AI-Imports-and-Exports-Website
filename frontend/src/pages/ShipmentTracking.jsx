@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Ship, Truck, Plane, MapPin, Search, Filter, Clock, MoreVertical, CheckCircle, AlertCircle, ChevronRight, Anchor } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { apiFetch } from '../api';
+
 const ShipmentTracking = () => {
   const [activeFilter, setActiveFilter] = useState('All');
   const [allShipments, setAllShipments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+
   useEffect(() => {
     const synchronizeShipments = async () => {
       try {
-        const response = await fetch('http://localhost:8000/shipments');
-        if (!response.ok) throw new Error(`Logistics server error: ${response.statusText}`);
-        const data = await response.json();
+        const data = await apiFetch('/shipments');
         setAllShipments(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Logistics synchronization failed:", err);

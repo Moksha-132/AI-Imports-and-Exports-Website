@@ -1,23 +1,22 @@
 import React, { useState } from 'react';
 import { Search, Info, Cpu, Check, AlertCircle } from 'lucide-react';
+import { apiFetch } from '../api';
+
 const HSNSearch = () => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [isClassifying, setIsClassifying] = useState(false);
   const [error, setError] = useState(null);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (!query.trim()) return;
     setIsClassifying(true);
     setError(null);
-    fetch('http://localhost:8000/hsn', {
+    
+    apiFetch('/hsn', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ description: query })
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Connection failed.");
-      return res.json();
     })
     .then(data => {
       setResults([{

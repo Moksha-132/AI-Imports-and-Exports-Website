@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, PieChart, TrendingUp, TrendingDown, DollarSign, Package, FileCheck, Globe, ArrowRight, Download, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { apiFetch } from '../api';
+
 const Analytics = () => {
   const [tradeStats, setTradeStats] = useState({
     total_trade_volume: "$0",
@@ -10,11 +12,11 @@ const Analytics = () => {
     monthly_breakdown: []
   });
   const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     const fetchAnalyticsData = async () => {
       try {
-        const response = await fetch('http://localhost:8000/analytics');
-        const data = await response.json();
+        const data = await apiFetch('/analytics');
         setTradeStats(data);
       } catch (error) {
         console.error("Failed to synchronize analytics data:", error);

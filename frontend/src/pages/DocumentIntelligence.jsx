@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, Loader2, X, Send, PartyPopper } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { apiFetch } from '../api';
 
 const DocumentIntelligence = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -12,8 +13,7 @@ const DocumentIntelligence = () => {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetch('http://localhost:8000/documents')
-      .then(res => res.json())
+    apiFetch('/documents')
       .then(data => setHistory(data))
       .catch(err => console.error("History fetch error:", err));
   }, [extractedData, isApproved]);
@@ -26,21 +26,16 @@ const DocumentIntelligence = () => {
     setIsApproved(false);
     const formData = new FormData();
     formData.append('file', file);
-    fetch('http://localhost:8000/documents', {
+    
+    apiFetch('/documents', {
       method: 'POST',
       body: formData
-    })
-    .then(res => {
-      if (!res.ok) throw new Error(`Upload failed: ${res.statusText}`);
-      return res.json();
     })
     .then(data => {
       let ext = data.extracted_data || {};
       if (typeof ext === 'string') {
         try { ext = JSON.parse(ext); } catch(e) { ext = {}; }
       }
-      
-      // Use top-level fields first, then nested ones
       setExtractedData({
         id: data.id,
         invoice_number: data.invoice_no || ext.invoice_no || "Not Detected",
@@ -53,8 +48,7 @@ const DocumentIntelligence = () => {
       setIsUploading(false);
     })
     .catch(err => {
-      console.error("Upload Error:", err);
-      setError("Failed to upload document. Please ensure the backend is running.");
+      setError(err.message);
       setIsUploading(false);
     });
   };
@@ -63,12 +57,8 @@ const DocumentIntelligence = () => {
     if (!extractedData) return;
     setIsApproving(true);
     setError(null);
-    fetch(`http://localhost:8000/documents/${extractedData.id}/approve`, {
+    apiFetch(`/documents/${extractedData.id}/approve`, {
       method: 'POST'
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Failed to approve document.");
-      return res.json();
     })
     .then(() => {
       setIsApproving(false);
@@ -76,12 +66,13 @@ const DocumentIntelligence = () => {
       setExtractedData(null);
     })
     .catch(err => {
-      setError("Failed to sync with Tracking system.");
+      setError(err.message);
       setIsApproving(false);
     });
   };
+
   const updatePayment = (id, status) => {
-    fetch(`http://localhost:8000/documents/${id}/payment`, {
+    apiFetch(`/documents/${id}/payment`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status })

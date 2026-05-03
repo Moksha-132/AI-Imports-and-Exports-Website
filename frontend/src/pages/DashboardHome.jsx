@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Package, AlertCircle, Globe, ArrowUpRight, ArrowDownRight, Truck, Database } from 'lucide-react';
+import { apiFetch } from '../api';
 
 const StatCard = ({ title, value, change, isPositive, icon: Icon, gradient }) => (
   <div className="glass-card p-8 flex flex-col gap-6 relative overflow-hidden group bg-white">
@@ -28,8 +29,8 @@ const DashboardHome = () => {
   useEffect(() => {
     // Parallel fetching for dashboard overview
     Promise.all([
-      fetch('http://localhost:8000/shipments').then(res => res.json()),
-      fetch('http://localhost:8000/risk').then(res => res.json())
+      apiFetch('/shipments'),
+      apiFetch('/risk')
     ])
     .then(([shipmentData, riskData]) => {
       setShipments(shipmentData);
