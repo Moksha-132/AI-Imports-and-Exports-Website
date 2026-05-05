@@ -83,9 +83,9 @@ const Footer = () => {
         <div className="pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-sm font-medium">© 2026 Shnoor International. All rights reserved.</p>
           <div className="flex gap-8 text-sm font-medium">
-            <a href="#" className="hover:text-amber-500 transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-amber-500 transition-colors">Terms & Conditions</a>
-            <a href="#" className="hover:text-amber-500 transition-colors">Company Profile</a>
+            <button onClick={() => navigate('/privacy')} className="hover:text-amber-500 transition-colors">Privacy Policy</button>
+            <button onClick={() => navigate('/terms')} className="hover:text-amber-500 transition-colors">Terms & Conditions</button>
+            <a href="/Shnoor_Company_Profile.pdf" download="Shnoor_Company_Profile.pdf" className="hover:text-amber-500 transition-colors">Company Profile</a>
           </div>
         </div>
       </div>

@@ -221,3 +221,173 @@ DUTY_TABLE = {
     "tuvalu":                           [0.05, 0.00],
     "vatican city":                     [0.00, 0.22],
 }
+
+CITY_COORDINATES = {
+    "mumbai": [19.0760, 72.8777],
+    "shanghai": [31.2304, 121.4737],
+    "singapore": [1.3521, 103.8198],
+    "rotterdam": [51.9225, 4.4792],
+    "hamburg": [53.5511, 9.9937],
+    "new york": [40.7128, -74.0060],
+    "los angeles": [34.0522, -118.2437],
+    "dubai": [25.2048, 55.2708],
+    "hong kong": [22.3193, 114.1694],
+    "london": [51.5074, -0.1278],
+    "berlin": [52.5200, 13.4050],
+    "sydney": [-33.8688, 151.2093],
+    "tokyo": [35.6762, 139.6503],
+    "vancouver": [49.2827, -123.1207],
+    "germany": [52.5200, 13.4050],
+    "india": [20.5937, 78.9629],
+    "usa": [37.0902, -95.7129],
+    "united states": [37.0902, -95.7129],
+    "china": [35.8617, 104.1954],
+    "france": [46.2276, 2.2137],
+    "italy": [41.8719, 12.5674],
+    "spain": [40.4637, -3.7492],
+    "united kingdom": [55.3781, -3.4360],
+    "singapore": [1.3521, 103.8198],
+    "dubai": [25.2048, 55.2708],
+    "mumbai": [19.0760, 72.8777],
+    "delhi": [28.6139, 77.2090],
+    "bangalore": [12.9716, 77.5946],
+    "chennai": [13.0827, 80.2707],
+    "san francisco": [37.7749, -122.4194],
+    "chicago": [41.8781, -87.6298],
+    "miami": [25.7617, -80.1918],
+    "houston": [29.7604, -95.3698],
+    "seattle": [47.6062, -122.3321],
+    "rotterdam": [51.9225, 4.4792],
+    "antwerp": [51.2194, 4.4025],
+    "busan": [35.1796, 129.0756],
+    "ningbo": [29.8683, 121.5440],
+    "shenzhen": [22.5431, 114.0579],
+    "guangzhou": [23.1291, 113.2644],
+}
+
+
+COMPANY_HUBS = {
+    "global electronics": "shenzhen",
+    "shnoor": "mumbai",
+    "apple": "san francisco",
+    "samsung": "busan",
+    "tesla": "austin",
+    "amazon": "seattle",
+    "google": "san francisco",
+    "microsoft": "seattle",
+    "tata": "mumbai",
+    "reliance": "mumbai",
+    "foxconn": "shenzhen",
+    "intel": "san francisco",
+    "bosch": "hamburg",
+    "siemens": "berlin",
+    "daimler": "hamburg",
+    "toyota": "tokyo",
+}
+
+
+GLOBAL_LOGISTICS_ROUTES = {
+    "mumbai_hamburg": [
+        {"name": "Mumbai Port", "lat": 19.0760, "lng": 72.8777},
+        {"name": "Arabian Sea Transit", "lat": 15.0, "lng": 65.0},
+        {"name": "Gulf of Aden", "lat": 12.0, "lng": 50.0},
+        {"name": "Suez Canal Transit", "lat": 29.9, "lng": 32.5},
+        {"name": "Mediterranean Sea", "lat": 35.0, "lng": 20.0},
+        {"name": "Strait of Gibraltar", "lat": 36.0, "lng": -5.3},
+        {"name": "English Channel", "lat": 50.0, "lng": -1.0},
+        {"name": "Port of Rotterdam", "lat": 51.9, "lng": 4.5},
+        {"name": "Hamburg Terminal", "lat": 53.5511, "lng": 9.9937}
+    ],
+    "shenzhen_vancouver": [
+        {"name": "Shenzhen Port", "lat": 22.5431, "lng": 114.0579},
+        {"name": "East China Sea", "lat": 28.0, "lng": 125.0},
+        {"name": "Tokyo Bay Transit", "lat": 35.0, "lng": 140.0},
+        {"name": "North Pacific Route", "lat": 45.0, "lng": 170.0},
+        {"name": "Vancouver Approach", "lat": 49.0, "lng": -124.0},
+        {"name": "Vancouver Port", "lat": 49.2827, "lng": -123.1207}
+    ],
+    "singapore_rotterdam": [
+        {"name": "Singapore Terminal", "lat": 1.3521, "lng": 103.8198},
+        {"name": "Malacca Strait", "lat": 4.0, "lng": 100.0},
+        {"name": "Indian Ocean Passage", "lat": 0.0, "lng": 80.0},
+        {"name": "Suez Canal Approach", "lat": 15.0, "lng": 45.0},
+        {"name": "Suez Canal", "lat": 29.9, "lng": 32.5},
+        {"name": "Mediterranean Waters", "lat": 36.0, "lng": 15.0},
+        {"name": "Gibraltar Strait", "lat": 36.1, "lng": -5.3},
+        {"name": "Bay of Biscay", "lat": 45.0, "lng": -5.0},
+        {"name": "Port of Rotterdam", "lat": 51.9225, "lng": 4.4792}
+    ],
+    "dubai_london": [
+        {"name": "Jebel Ali Port", "lat": 25.0, "lng": 55.0},
+        {"name": "Gulf of Oman", "lat": 24.0, "lng": 59.0},
+        {"name": "Arabian Sea", "lat": 15.0, "lng": 60.0},
+        {"name": "Bab el-Mandeb", "lat": 12.5, "lng": 43.5},
+        {"name": "Red Sea Transit", "lat": 22.0, "lng": 38.0},
+        {"name": "Suez Canal", "lat": 30.0, "lng": 32.5},
+        {"name": "Mediterranean", "lat": 34.0, "lng": 25.0},
+        {"name": "Strait of Gibraltar", "lat": 36.0, "lng": -5.5},
+        {"name": "English Channel", "lat": 50.5, "lng": -1.0},
+        {"name": "Port of London", "lat": 51.5074, "lng": -0.1278}
+    ],
+    "shenzhen_usa": [
+        {"name": "Shenzhen Terminal", "lat": 22.5, "lng": 114.1},
+        {"name": "South China Sea", "lat": 15.0, "lng": 115.0},
+        {"name": "Pacific Transit East", "lat": 10.0, "lng": 160.0},
+        {"name": "Panama Canal Approach", "lat": 7.0, "lng": -80.0},
+        {"name": "Panama Canal", "lat": 9.1, "lng": -79.9},
+        {"name": "Caribbean Sea", "lat": 15.0, "lng": -75.0},
+        {"name": "North Atlantic Route", "lat": 30.0, "lng": -70.0},
+        {"name": "US East Coast Approach", "lat": 38.0, "lng": -73.0},
+        {"name": "New York Port", "lat": 40.7, "lng": -74.0}
+    ],
+    "china_usa": [
+        {"name": "Ningbo Port", "lat": 29.8, "lng": 122.0},
+        {"name": "East China Sea", "lat": 30.0, "lng": 125.0},
+        {"name": "North Pacific Current", "lat": 40.0, "lng": 160.0},
+        {"name": "Mid-Pacific Transit", "lat": 35.0, "lng": -140.0},
+        {"name": "California Coast", "lat": 34.0, "lng": -120.0},
+        {"name": "Los Angeles Terminal", "lat": 33.7, "lng": -118.2}
+    ],
+    "shanghai_london_air": [
+        {"name": "Shanghai Pudong Intl", "lat": 31.1, "lng": 121.8},
+        {"name": "High Altitude Corridor - Asia", "lat": 40.0, "lng": 100.0},
+        {"name": "Central Asian Airspace", "lat": 45.0, "lng": 70.0},
+        {"name": "European Airway Entry", "lat": 50.0, "lng": 30.0},
+        {"name": "London Heathrow Cargo", "lat": 51.47, "lng": -0.45}
+    ],
+    "berlin_paris_land": [
+        {"name": "Berlin Logistics Hub", "lat": 52.5, "lng": 13.4},
+        {"name": "Hannover Interchange", "lat": 52.37, "lng": 9.73},
+        {"name": "Dortmund Depot", "lat": 51.5, "lng": 7.4},
+        {"name": "Brussels Transit Point", "lat": 50.85, "lng": 4.35},
+        {"name": "Paris Charles de Gaulle Land", "lat": 49.0, "lng": 2.5}
+    ],
+    "delhi_mumbai_land": [
+        {"name": "Delhi ICD Tughlakabad", "lat": 28.5, "lng": 77.2},
+        {"name": "Jaipur Highway Crossing", "lat": 26.9, "lng": 75.8},
+        {"name": "Ahmedabad Logistics Hub", "lat": 23.0, "lng": 72.6},
+        {"name": "Surat Freight Station", "lat": 21.2, "lng": 72.8},
+        {"name": "JNPT Port Mumbai", "lat": 18.95, "lng": 72.95}
+    ],
+    "india_germany_sea": [
+        {"name": "Nhava Sheva Port", "lat": 18.95, "lng": 72.95},
+        {"name": "Arabian Sea Passage", "lat": 15.0, "lng": 65.0},
+        {"name": "Gulf of Aden Transit", "lat": 12.0, "lng": 45.0},
+        {"name": "Red Sea Passage", "lat": 20.0, "lng": 38.0},
+        {"name": "Suez Canal", "lat": 30.0, "lng": 32.5},
+        {"name": "Mediterranean Sea", "lat": 35.0, "lng": 20.0},
+        {"name": "Strait of Gibraltar", "lat": 36.0, "lng": -5.5},
+        {"name": "English Channel Crossing", "lat": 50.0, "lng": -2.0},
+        {"name": "Hamburg Port Terminal", "lat": 53.55, "lng": 9.99}
+    ],
+    "germany_india_sea": [
+        {"name": "Hamburg Port", "lat": 53.55, "lng": 9.99},
+        {"name": "North Sea Corridor", "lat": 52.0, "lng": 3.0},
+        {"name": "Bay of Biscay", "lat": 45.0, "lng": -5.0},
+        {"name": "Gibraltar Strait Passage", "lat": 36.0, "lng": -5.5},
+        {"name": "Suez Canal Transit", "lat": 31.0, "lng": 32.0},
+        {"name": "Red Sea Corridor", "lat": 20.0, "lng": 38.0},
+        {"name": "Arabian Sea Hub", "lat": 15.0, "lng": 60.0},
+        {"name": "Mumbai Port Terminal", "lat": 18.9, "lng": 72.8}
+    ]
+}

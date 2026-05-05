@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FileText, Search, Calculator, ShieldCheck, Truck, BarChart3, LogOut, DollarSign } from 'lucide-react';
+import { LayoutDashboard, FileText, Search, Calculator, ShieldCheck, Truck, BarChart3, LogOut, DollarSign, Activity } from 'lucide-react';
 
 const Sidebar = ({ onLogout }) => {
   const navigate = useNavigate();

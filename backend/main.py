@@ -10,7 +10,7 @@ from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
 from database import get_database_session
 import models
 from hsn_engine import get_hsn, lookup_hsn
-from trade_constants import COUNTRY_RISK, DUTY_TABLE
+from trade_constants import COUNTRY_RISK, DUTY_TABLE, CITY_COORDINATES, COMPANY_HUBS, GLOBAL_LOGISTICS_ROUTES
 from pydantic_models import (
     ContactForm, 
     ForgotPasswordRequest, 
@@ -22,10 +22,9 @@ from pydantic_models import (
 )
 from templates import get_contact_email_template, get_password_reset_template
 load_dotenv()
-
 app = FastAPI(
     title="Shnoor Imports and Exports",
-    description="Trade Intelligence API Service",
+    description="Trade Service",
     version="1.0.0"
 )
 app.add_middleware(
@@ -64,6 +63,68 @@ def calculate_trust_score(origin: str, destination: str, overdue_count: int, pai
     score += min(paid_count * 3, 20)  
     return round(max(0.0, min(100.0, score)), 1)
 
+def interpolate_route_position(route: List[Dict[str, Any]], progress_pct: float) -> Dict[str, Any]:
+    if not route:
+        return {"lat": 0.0, "lng": 0.0, "location": "Unknown"}
+    if progress_pct <= 0:
+        return {"lat": route[0]["lat"], "lng": route[0]["lng"], "location": route[0]["name"]}
+    if progress_pct >= 100:
+        return {"lat": route[-1]["lat"], "lng": route[-1]["lng"], "location": route[-1]["name"]}
+    n_segments = len(route) - 1
+    segment_progress = (progress_pct / 100.0) * n_segments
+    segment_idx = int(segment_progress)
+    local_pct = segment_progress - segment_idx
+    p1 = route[segment_idx]
+    p2 = route[min(segment_idx + 1, len(route)-1)]
+    lat = p1["lat"] + (p2["lat"] - p1["lat"]) * local_pct
+    lng = p1["lng"] + (p2["lng"] - p1["lng"]) * local_pct
+    if local_pct < 0.15:
+        location = f"Departing {p1['name']}"
+    elif local_pct > 0.85:
+        location = f"Approaching {p2['name']}"
+    else:
+        location = f"En route to {p2['name']}"    
+    return {"lat": lat, "lng": lng, "location": location}
+
+def get_best_route(origin: str, destination: str, origin_lat: float, origin_lng: float, dest_lat: float, dest_lng: float, mode: str = "Sea") -> List[Dict[str, Any]]:
+    o_norm = origin.lower().strip()
+    d_norm = destination.lower().strip()
+    m_norm = mode.lower().strip()
+    o_hub = ""
+    for company, hub in COMPANY_HUBS.items():
+        if company in o_norm:
+            o_hub = hub
+            break
+    for key, route in GLOBAL_LOGISTICS_ROUTES.items():
+        key_parts = key.split('_')
+        o_aliases = [o_norm, o_hub] if o_hub else [o_norm]
+        if "mumbai" in o_aliases or "shnoor" in o_norm: o_aliases.append("india")
+        d_aliases = [d_norm]
+        if "germany" in d_norm or "hamburg" in d_norm: d_aliases.extend(["germany", "hamburg"])
+        
+        match_o = any(a in key_parts[0] or key_parts[0] in a for a in o_aliases if a)
+        match_d = any(a in key_parts[1] or key_parts[1] in a for a in d_aliases if a)
+        match_m = True
+        if len(key_parts) > 2:
+            match_m = m_norm in key_parts[2]     
+        if match_o and match_d and match_m:
+            return route        
+    if m_norm == "air":
+        waypoint_name = "High Altitude Corridor"
+    elif m_norm == "land":
+        waypoint_name = "Interstate Network Junction"
+    else:
+        waypoint_name = "Deep Water Corridor"      
+    import random
+    offset_lat = random.uniform(-2.0, 2.0)
+    offset_lng = random.uniform(-5.0, 5.0)
+    
+    return [
+        {"name": origin, "lat": origin_lat, "lng": origin_lng},
+        {"name": waypoint_name, "lat": (origin_lat + dest_lat) / 2 + offset_lat, "lng": (origin_lng + dest_lng) / 2 + offset_lng},
+        {"name": destination, "lat": dest_lat, "lng": dest_lng}
+    ]
+
 @app.post("/documents", status_code=status.HTTP_201_CREATED)
 async def upload_document(file: UploadFile = File(...), user_id: int = 1, db: Session = Depends(get_database_session)):
     from ocr_engine import process_document    
@@ -100,8 +161,7 @@ async def approve_document(doc_id: int, user_id: int = 1, db: Session = Depends(
     ).first()  
     if not target_doc:
         raise HTTPException(status_code=404, detail="Document not found")       
-    extracted_info = target_doc.extracted_data or {}
-    
+    extracted_info = target_doc.extracted_data or {}  
     try:
         vendor = extracted_info.get("vendor", "Unknown")
         origin = extracted_info.get("origin", "India")
@@ -133,12 +193,35 @@ async def approve_document(doc_id: int, user_id: int = 1, db: Session = Depends(
             )
             db.add(new_alert)           
         tracking_number = f"SHP-{extracted_info.get('invoice_no', 'UNK')}-{target_doc.id}"
+        def resolve_coords(location_str: str, default: list) -> list:
+            if not location_str:
+                return default         
+            clean_loc = location_str.lower().strip()           
+            if clean_loc in CITY_COORDINATES:
+                return CITY_COORDINATES[clean_loc]           
+            for company, hub in COMPANY_HUBS.items():
+                if company in clean_loc:
+                    return CITY_COORDINATES.get(hub, default)         
+            parts = [p.strip() for p in clean_loc.split(',')]
+            for part in parts:
+                if part in CITY_COORDINATES:
+                    return CITY_COORDINATES[part]         
+            return default
+        o_coords = resolve_coords(vendor, [20.5937, 78.9629])
+        d_coords = resolve_coords(destination, [52.5200, 13.4050])      
         new_shipment = models.Shipment(
             shipment_id=tracking_number,
             origin=vendor,
             destination=destination,
             type=extracted_info.get("transport_mode", "Sea"),
-            status="Pending",
+            status="In Transit",
+            progress=15,
+            origin_lat=o_coords[0],
+            origin_lng=o_coords[1],
+            dest_lat=d_coords[0],
+            dest_lng=d_coords[1],
+            current_lat=o_coords[0] + (d_coords[0] - o_coords[0]) * 0.15,
+            current_lng=o_coords[1] + (d_coords[1] - o_coords[1]) * 0.15,
             eta=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=7),
             user_id=user_id
         )       
@@ -150,7 +233,7 @@ async def approve_document(doc_id: int, user_id: int = 1, db: Session = Depends(
     except Exception as error:
         db.rollback()
         logger.error(f"Approval workflow failed for doc {doc_id}: {error}")
-        raise HTTPException(status_code=500, detail="Failed to process document approval.")
+        raise HTTPException(status_code=500, detail="Failed to process document.")
 
 @app.patch("/documents/{doc_id}/payment")
 async def update_payment_status(doc_id: int, payload: dict, user_id: int = 1, db: Session = Depends(get_database_session)):
@@ -164,10 +247,6 @@ async def update_payment_status(doc_id: int, payload: dict, user_id: int = 1, db
     document.payment_status = payment_status
     if payment_status == "paid":
         document.paid_at = datetime.datetime.now(datetime.timezone.utc)
-        if document.shipment:
-            document.shipment.status = "Processed"
-    elif document.shipment:
-        document.shipment.status = "Pending"
     db.commit()
     return {"status": "ok", "payment_status": document.payment_status}
 
@@ -271,6 +350,95 @@ async def get_shipments(user_id: int = 1, db: Session = Depends(get_database_ses
         results.append(shipment_data)       
     return results
 
+@app.get("/shipments/live")
+async def get_live_tracking(user_id: int = 1, db: Session = Depends(get_database_session)):
+    shipments = db.query(models.Shipment).filter(
+        models.Shipment.user_id == user_id
+    ).all()   
+    live_data = []
+    now = datetime.datetime.utcnow()   
+    for s in shipments:
+        route = get_best_route(s.origin, s.destination, s.origin_lat, s.origin_lng, s.dest_lat, s.dest_lng, s.type)       
+        current_lat = s.origin_lat or 0.0
+        current_lng = s.origin_lng or 0.0
+        progress = s.progress or 0
+        current_location = "Initializing Route"        
+        status_lower = (s.status or "").lower().strip()       
+        if status_lower == "in transit":
+            if s.eta and s.created_at:
+                total_duration = (s.eta - s.created_at).total_seconds()
+                elapsed = (now - s.created_at).total_seconds()             
+                if total_duration > 0:
+                    calc_progress = min(0.99, max(0.15, elapsed / total_duration))
+                else:
+                    calc_progress = 0.99
+            else:
+                total_duration = 7 * 24 * 3600
+                elapsed = (now - s.created_at).total_seconds()
+                calc_progress = min(0.99, (elapsed / total_duration) + 0.15)           
+            progress = int(calc_progress * 100)
+            pos_data = interpolate_route_position(route, progress)
+            current_lat = pos_data["lat"]
+            current_lng = pos_data["lng"]
+            current_location = pos_data["location"]            
+            s.progress = progress
+            s.current_lat = current_lat
+            s.current_lng = current_lng
+        elif status_lower in ["processed", "delivered"]:
+            current_lat = s.dest_lat or 0.0
+            current_lng = s.dest_lng or 0.0
+            progress = 100
+            current_location = f"Arrived at {s.destination}"
+            s.progress = 100
+            s.current_lat = current_lat
+            s.current_lng = current_lng       
+        live_data.append({
+            "id": s.id,
+            "shipment_id": s.shipment_id,
+            "current_lat": current_lat,
+            "current_lng": current_lng,
+            "current_location": current_location,
+            "origin_lat": s.origin_lat,
+            "origin_lng": s.origin_lng,
+            "dest_lat": s.dest_lat,
+            "dest_lng": s.dest_lng,
+            "progress": progress,
+            "status": s.status,
+            "type": s.type,
+            "route_path": route
+        })   
+    db.commit()
+    return live_data
+
+@app.patch("/shipments/{shipment_id}")
+async def update_shipment(shipment_id: int, payload: dict, user_id: int = 1, db: Session = Depends(get_database_session)):
+    shipment = db.query(models.Shipment).filter(
+        models.Shipment.id == shipment_id,
+        models.Shipment.user_id == user_id
+    ).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")
+    
+    for key, value in payload.items():
+        if hasattr(shipment, key):
+            setattr(shipment, key, value)   
+    db.commit()
+    db.refresh(shipment)
+    return shipment
+
+@app.delete("/shipments/{shipment_id}")
+async def delete_shipment(shipment_id: int, user_id: int = 1, db: Session = Depends(get_database_session)):
+    shipment = db.query(models.Shipment).filter(
+        models.Shipment.id == shipment_id,
+        models.Shipment.user_id == user_id
+    ).first()
+    if not shipment:
+        raise HTTPException(status_code=404, detail="Shipment not found")     
+    db.query(models.Document).filter(models.Document.shipment_id == shipment.id).delete() 
+    db.delete(shipment)
+    db.commit()
+    return {"status": "success", "message": "Shipment and associated data removed"}
+
 @app.get("/health")
 async def health_check():
     return {
@@ -278,7 +446,6 @@ async def health_check():
         "timestamp": datetime.datetime.now(datetime.timezone.utc),
         "version": "1.0.0"
     }
-
 @app.post("/register")
 async def register(user_data: UserCreate, db: Session = Depends(get_database_session)):
     existing_user = db.query(models.User).filter(models.User.email == user_data.email).first()
@@ -356,6 +523,7 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
         db.rollback()
         logger.error(f"Failed to finalize password reset for user ID {request.token}: {error}")
         raise HTTPException(status_code=500, detail="Password update failed.")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

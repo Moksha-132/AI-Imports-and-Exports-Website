@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Loader2, Globe, ArrowLeft, Sun, CheckCircle2, Layout, ShieldCheck, Zap } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Loader2, Globe, ArrowLeft, Sun, Layout, ShieldCheck, Zap } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -8,10 +8,23 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const [isAccepted, setIsAccepted] = useState(false);
   const [error, setError] = useState('');
+  const [privacyAccepted, setPrivacyAccepted] = useState(localStorage.getItem('privacy_accepted') === 'true');
+  const [termsAccepted, setTermsAccepted] = useState(localStorage.getItem('terms_accepted') === 'true');
+
+  React.useEffect(() => {
+    if (privacyAccepted && termsAccepted) {
+      setIsAccepted(true);
+    }
+  }, [privacyAccepted, termsAccepted]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!isAccepted) {
+      setError('You must accept the Privacy Policy and Terms & Conditions to proceed.');
+      return;
+    }
     setIsLoading(true);
     setError('');
     try {
@@ -38,7 +51,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans selection:bg-amber-100 overflow-x-hidden">
-      {/* Top Navigation */}
       <nav className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
         <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
           <img src="/shnoor logoo.png" alt="Shnoor Logo" className="h-10 w-auto" />
@@ -92,17 +104,7 @@ const Login = () => {
             ))}
           </div>
 
-          <div className="p-8 rounded-3xl bg-emerald-50 border border-emerald-100 flex items-start gap-5">
-            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-              <CheckCircle2 size={24} />
-            </div>
-            <div className="space-y-1">
-              <p className="text-xs font-black text-emerald-600 uppercase tracking-widest">Enterprise Security</p>
-              <p className="text-slate-600 text-sm leading-relaxed">
-                "Shnoor's intelligence system has completely transformed how we manage our global supply chain. A true partner in growth."
-              </p>
-            </div>
-          </div>
+
         </div>
 
         {/* Right Side: Login Form Card */}
@@ -166,11 +168,37 @@ const Login = () => {
                   </button>
                 </div>
 
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                  <label className="flex items-start gap-3 cursor-pointer group">
+                    <input 
+                      type="checkbox" 
+                      checked={isAccepted}
+                      onChange={(e) => setIsAccepted(e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded border-slate-300 text-amber-500 focus:ring-amber-500" 
+                    />
+                    <span className="text-xs text-slate-500 leading-relaxed group-hover:text-slate-900 transition-colors">
+                      I have read and agree to the{' '}
+                      <button type="button" onClick={() => navigate('/privacy?from=login')} className={`${privacyAccepted ? 'text-emerald-600' : 'text-amber-600'} font-bold hover:underline`}>
+                        Privacy Policy {privacyAccepted && '✅'}
+                      </button>
+                      {' '}and{' '}
+                      <button type="button" onClick={() => navigate('/terms?from=login')} className={`${termsAccepted ? 'text-emerald-600' : 'text-amber-600'} font-bold hover:underline`}>
+                        Terms & Conditions {termsAccepted && '✅'}
+                      </button>.
+                    </span>
+                  </label>
+                </div>
+
                 {error && <p className="text-red-500 text-sm font-bold text-center mt-2">{error}</p>}
+                
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="w-full bg-slate-900 hover:bg-black text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-slate-900/10 transition-all active:scale-[0.98] mt-4"
+                  className={`w-full font-bold py-5 rounded-2xl flex items-center justify-center gap-3 transition-all active:scale-[0.98] mt-4 shadow-xl ${
+                    isAccepted 
+                    ? 'bg-slate-900 hover:bg-black text-white shadow-slate-900/10' 
+                    : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none border border-slate-200'
+                  }`}
                 >
                   {isLoading ? (
                     <Loader2 className="animate-spin" size={24} />
