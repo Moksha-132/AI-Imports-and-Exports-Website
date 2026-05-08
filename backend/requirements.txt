@@ -13,3 +13,5 @@ sqlalchemy
 psycopg2-binary
 python-dotenv
 fastapi-mail
+pymupdf
+pillow
