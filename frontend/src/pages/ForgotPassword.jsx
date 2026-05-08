@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, ArrowLeft, Loader2, Zap, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { apiFetch } from '../api';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -15,19 +16,13 @@ const ForgotPassword = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:8000/forgot-password', {
+      await apiFetch('/forgot-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
-      
-      if (response.ok) {
-        setIsSent(true);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      setIsSent(true);
     } catch (err) {
-      setError('Failed to connect to the server.');
+      setError(err.message || 'Failed to connect to the server.');
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Loader2, Globe, ArrowLeft, CheckCircle2, Layout, ShieldCheck, Zap, User, Building2 } from 'lucide-react';
+import { apiFetch } from '../api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,22 +20,15 @@ const Register = () => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/register', {
+      const data = await apiFetch('/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('user_id', data.user_id);
-        localStorage.setItem('full_name', formData.fullName);
-        navigate('/dashboard');
-      } else {
-        const data = await response.json();
-        setError(data.detail || 'Registration failed');
-      }
+      localStorage.setItem('user_id', data.user_id);
+      localStorage.setItem('full_name', formData.fullName);
+      navigate('/dashboard');
     } catch (err) {
-      setError('Connection error');
+      setError(err.message || 'Connection error');
     } finally {
       setIsLoading(false);
     }

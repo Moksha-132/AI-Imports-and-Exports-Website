@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { apiFetch } from '../api';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -20,19 +21,13 @@ const Contact = () => {
     setError('');
     
     try {
-      const response = await fetch('http://localhost:8000/contact', {
+      await apiFetch('/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-      
-      if (response.ok) {
-        setIsSent(true);
-      } else {
-        setError('Failed to send message. Please try again.');
-      }
+      setIsSent(true);
     } catch (err) {
-      setError('Connection error. Is the backend running?');
+      setError(err.message || 'Connection error. Is the backend running?');
     } finally {
       setIsLoading(false);
     }

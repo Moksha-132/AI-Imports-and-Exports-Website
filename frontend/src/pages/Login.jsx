@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ArrowRight, Loader2, Globe, ArrowLeft, Sun, Layout, ShieldCheck, Zap } from 'lucide-react';
+import { apiFetch } from '../api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,22 +29,15 @@ const Login = () => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:8000/login', {
+      const data = await apiFetch('/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('user_id', data.user_id);
-        localStorage.setItem('full_name', data.full_name);
-        navigate('/dashboard');
-      } else {
-        const data = await response.json();
-        setError(data.detail || 'Invalid credentials');
-      }
+      localStorage.setItem('user_id', data.user_id);
+      localStorage.setItem('full_name', data.full_name);
+      navigate('/dashboard');
     } catch (err) {
-      setError('Connection error');
+      setError(err.message || 'Connection error');
     } finally {
       setIsLoading(false);
     }

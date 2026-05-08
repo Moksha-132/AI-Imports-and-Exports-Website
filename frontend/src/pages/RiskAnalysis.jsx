@@ -1,25 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, CheckCircle, Search, Filter, ArrowUpRight, Globe, TrendingUp, History, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { apiFetch } from '../api';
 const RiskAnalysis = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [riskProfiles, setRiskProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   useEffect(() => {
-    fetch('http://localhost:8000/risk')
-      .then(res => {
-        if (!res.ok) throw new Error(`Error: ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
+    const fetchRiskData = async () => {
+      try {
+        const data = await apiFetch('/risk');
         setRiskProfiles(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchRiskData();
   }, []);
   const filteredProfiles = riskProfiles.filter(p => p.entity_name.toLowerCase().includes(searchTerm.toLowerCase()));
   return (
